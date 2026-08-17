@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>勇士后勤官 - 收藏与复活</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      background: #2b2b3a;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+      height: 100vh;
+    }
+    #app {
+      max-width: 500px;
+      width: 100%;
+      background: #f5efe6;
+      border-radius: 36px;
+      padding: 80px 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #d9c9b0;
+      padding: 14px 22px;
+      border-radius: 50px;
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .gold { color: #b8860b; font-size: 22px; }
+    button {
+      background: #4a6b4a;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 3px 0 #2d442d;
+      transition: 0.05s linear;
+    }
+    button:active { transform: translateY(3px); box-shadow: none; }
+    .btn-danger { background: #a54c4c; box-shadow: 0 3px 0 #6e3333; }
+    .btn-blue { background: #4a6a8a; box-shadow: 0 3px 0 #2d4a62; }
+
+    .zone {
+      background: #e8ddd0;
+      border-radius: 24px;
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      margin-bottom: 14px;
+      transition: box-shadow 0.2s, border 0.2s;
+    }
+    .zone:last-of-type { margin-bottom: 0; }
+    .zone.highlight {
+      border: 2px solid #f5b342;
+      box-shadow: 0 0 15px #f5b342;
+    }
+    .zone-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #5a4d3a;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grid {
+      flex: 1;
+      overflow-y: auto;
+      background: #d6c8b8;
+      border-radius: 16px;
+      padding: 14px;
+      align-content: flex-start;
+    }
+
+    #heroZone { width: 100%; }
+    .hero-content { display: flex; flex: 1; min-height: 0; gap: 12px; }
+    #heroGrid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(6, 40px);
+      gap: 20px;
+      justify-items: center;
+      align-items: center;
+      overflow: visible;
+      background: #d6c8b8;
+      border-radius: 16px;
+      padding: 14px;
+    }
+    #monsterPanel {
+      flex: 1;
+      background: #d6c8b8;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+    .monster-card {
+      background: #c4b4a0;
+      border-radius: 12px;
+      padding: 8px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 2px solid #a3927c;
+    }
+    .monster-name { font-weight: bold; color: #5a4d3a; }
+    .monster-stats { color: #3a3020; }
+
+    .hex-slot {
+      width: 80px;
+      height: 80px;
+      background: #c4b4a0;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.1s;
+      position: relative;
+      border: 3px dashed #a3927c;
+      box-sizing: content-box;
+    }
+    .hex-slot.filled { background: #b8a58a; border: 2px solid #8a7a62; }
+    .slot-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      padding: 5px;
+    }
+    .hero-name {
+      font-weight: bold;
+      font-size: 12px;
+      background: rgba(255,255,255,0.8);
+      padding: 4px 8px;
+      border-radius: 8px;
+      text-align: center;
+      word-break: break-word;
+      max-width: 100%;
+    }
+
+    #productionGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      padding: 10px;
+      overflow: hidden;
+      align-content: start;
+    }
+    .slot {
+      width: 80px;
+      height: 80px;
+      background: #c4b4a0;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #2d2d1c;
+      border: 3px dashed #a3927c;
+      transition: 0.1s;
+      cursor: default;
+      flex-shrink: 0;
+    }
+    #productionGrid .slot { width: 100%; height: 80px; }
+    .slot.has-item { cursor: grab; }
+    .slot.dragover { border-color: #f5b342; background: #dac29c; transform: scale(0.95); }
+    .item {
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      text-align: center;
+      background: #fcf3e0;
+      border: 2px solid #a68b6b;
+      cursor: grab;
+    }
+    .item.lv1 { background: #e8f0e0; border-color: #6a8a5a; }
+    .item.lv2 { background: #d4e8c0; border-color: #3a6a2a; box-shadow: 0 0 0 3px #a0c080; }
+    .item.lv3 { background: #f0d8a0; border-color: #b8860b; box-shadow: 0 0 0 3px #d4a030; }
+    .item.lv4 { background: #f0c8a0; border-color: #a06020; box-shadow: 0 0 0 3px #c09040; }
+    .item.lv5 { background: #e8b090; border-color: #804010; box-shadow: 0 0 0 3px #b08030; }
+    .item.lv6 { background: #d0a080; border-color: #602008; box-shadow: 0 0 0 3px #a07020; }
+    .item.lv7 { background: #c09070; border-color: #401004; box-shadow: 0 0 0 3px #906010; }
+    .item.lv8 { background: #b08060; border-color: #200002; box-shadow: 0 0 0 3px #805000; }
+    .item .type { font-size: 14px; }
+    .item .lv { font-size: 10px; opacity: 0.8; }
+    .item.potion { background: #f8d0d0; border-color: #c44; cursor: grab; }
+
+    .flex-row { display: flex; gap: 12px; align-items: center; flex-shrink: 0; margin-top: 0; margin-bottom: 8px; }
+    #log {
+      background:#2d2d1c; color:#b0b090; padding:12px 18px; border-radius:20px;
+      font-size:13px; min-height:56px; flex-shrink: 0;
+    }
+
+    .battle-log {
+      background: #1e1e1e; color: #ccc; padding: 8px; border-radius: 12px;
+      font-size: 11px; height: 80px; overflow-y: auto; margin-top: 6px;
+    }
+    .queue-item {
+      display: inline-block; background: #555; padding: 2px 6px; border-radius: 8px;
+      margin: 2px; font-size: 10px;
+    }
+    .queue-item.hero { background: #4a6b4a; color: white; }
+    .queue-item.monster { background: #a54c4c; color: white; }
+
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 10;
+    }
+    .modal.active { display: flex; }
+    .modal-box {
+      background: #f5efe6; border-radius: 24px; padding: 20px; min-width: 280px; text-align: center;
+      pointer-events: auto;
+    }
+
+    #furnacePanel {
+      pointer-events: none;
+      align-items: flex-start;
+      padding-top: 8vh;
+    }
+    #furnacePanel > * { pointer-events: auto; }
+
+    .tavern-section { margin: 10px 0; text-align: left; }
+    .tavern-unit {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #d9c9b0; border-radius: 12px; padding: 8px; margin: 6px 0;
+    }
+    .tavern-unit button { padding: 5px 14px; font-size: 12px; }
+
+    .furnace-drop {
+      width: 120px; height: 80px; margin: 16px auto;
+      background: #444; border: 3px dashed #f5b342; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      color: #aaa; font-size: 14px; font-weight: bold;
+      transition: 0.1s;
+      pointer-events: auto;
+    }
+    .furnace-drop.dragover { background: #555; border-color: #ffd700; }
+
+    .upgrade-btn {
+      background: #b8860b; box-shadow: 0 3px 0 #7a5c00; margin-top: 10px;
+    }
+
+    .detail-slot-row {
+      display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px;
+    }
+    .detail-slot-icon {
+      width: 28px; height: 28px; background: #9a8a78; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; color: white;
+      font-weight: bold; font-size: 14px; border: 2px solid #6a5a4a;
+    }
+    .detail-slot-icon.filled { background: #d4b080; border-color: #b8860b; }
+
+    .collection-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0;
+    }
+    .collection-slot {
+      aspect-ratio: 1;
+      background: #c4b4a0;
+      border-radius: 12px;
+      border: 2px dashed #8a7a62;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      color: #5a4d3a;
+      transition: 0.1s;
+      padding: 4px;
+      text-align: center;
+    }
+    .collection-slot.filled { border-style: solid; background: #b8a58a; }
+    .collection-slot .col-icon { font-size: 20px; }
+    .collection-slot .col-name { font-size: 11px; word-break: break-word; }
+    .collection-slot .col-status { font-size: 9px; color: #8a4a4a; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <span>⚔️ 后勤官</span>
+    <span class="gold">🪙 <span id="goldDisplay">100</span></span>
+  </div>
+
+  <div class="zone" id="heroZone">
+    <div class="zone-title">
+      <span>🛡️ 备战区 (点击六边形放置英雄)</span>
+      <div>
+        <button onclick="openFurnace()" style="margin-right:6px;">🔥 熔炉</button>
+        <button onclick="openTown()" style="margin-right:6px;">🏛️ 城镇</button>
+        <button onclick="openTavern()">🏨 酒馆</button>
+      </div>
+    </div>
+    <div class="hero-content">
+      <div id="heroGrid"></div>
+      <div id="monsterPanel">
+        <button id="battleBtn" onclick="startBattle()" style="width:100%; background:#b8860b;">⚔️ 搜寻并战斗</button>
+        <div id="monsterList" style="flex:1; overflow-y:auto; min-height:0;">
+          <p style="color:#8a7a6a; text-align:center;">点击按钮直接搜寻怪物并战斗</p>
+        </div>
+        <div style="font-weight:bold; text-align:center;" id="monsterTotal"></div>
+        <div class="battle-log" id="battleLog" style="display:none;"></div>
+        <div id="actionQueue" style="font-size:10px; margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-row">
+    <button onclick="openCollection()">📌 收藏</button>
+    <button class="btn-blue" onclick="resetGame()">🔄 重置</button>
+  </div>
+
+  <div class="zone" id="productionZone">
+    <div class="zone-title">
+      <span>📦 生产区 (拖拽装备合成 / 血瓶拖给英雄回血 / 拖入熔炉销毁)</span>
+      <button onclick="produceItem()">+ 生产 (20金)</button>
+    </div>
+    <div id="productionGrid" class="grid"></div>
+  </div>
+
+  <div id="log">欢迎！失败只损失英雄装备，生产区装备保留。</div>
+</div>
+
+<!-- 熔炉弹窗 -->
+<div id="furnacePanel" class="modal">
+  <div class="modal-box">
+    <h3>🔥 熔炉销毁</h3>
+    <p>花费 <strong>10 金币</strong> 激活，激活后可无限销毁装备</p>
+    <p id="furnaceStatus">状态：未激活</p>
+    <button id="furnaceActivateBtn" onclick="activateFurnace()">激活 (10金)</button>
+    <div id="furnaceDropZone" class="furnace-drop">拖拽装备到这里销毁</div>
+    <button onclick="closeFurnace()" style="margin-top:12px;">关闭</button>
+  </div>
+</div>
+
+<!-- 城镇弹窗 -->
+<div id="townPanel" class="modal">
+  <div class="modal-box">
+    <h3>🏛️ 城镇管理</h3>
+    <p>等级：<span id="townLevel"></span></p>
+    <p>税收：每分钟 <span id="townTax"></span> 金币</p>
+    <p id="townUpgradeCost"></p>
+    <button id="townUpgradeBtn" onclick="upgradeTown()">升级</button>
+    <button onclick="closeTown()" style="margin-top:12px;">关闭</button>
+  </div>
+</div>
+
+<!-- 酒馆招募弹窗 -->
+<div id="tavernPanel" class="modal">
+  <div class="modal-box">
+    <h3>🏨 酒馆招募</h3>
+    <div class="tavern-section">
+      <strong>⚔️ 英雄 (属性强大，价格浮动)</strong>
+      <div id="tavernHeroList"></div>
+    </div>
+    <div class="tavern-section">
+      <strong>🧑 冒险者 (属性较低，固定10金)</strong>
+      <div id="tavernAdventurerList"></div>
+    </div>
+    <button onclick="closeTavern()" style="margin-top:12px;">关闭</button>
+  </div>
+</div>
+
+<!-- 英雄详情弹窗 -->
+<div id="heroDetailPanel" class="modal">
+  <div class="modal-box">
+    <h3 id="detailHeroName">英雄详情</h3>
+    <div class="stats-grid" id="detailStats"></div>
+    <div id="detailEquipSlots" style="margin: 10px 0;"></div>
+    <button class="modal-btn warning" onclick="changeHero()">🔄 更换英雄</button>
+    <button id="upgradeAdventurerBtn" class="upgrade-btn" style="display:none;" onclick="upgradeAdventurer()">⬆️ 升级为英雄 (30金)</button>
+    <button class="modal-btn primary" onclick="closeHeroDetail()">关闭</button>
+  </div>
+</div>
+
+<!-- 英雄选择弹窗 -->
+<div id="heroSelector" class="modal">
+  <div class="modal-box">
+    <h3>选择英雄</h3>
+    <div id="recruitList"></div>
+    <button onclick="removeHeroFromSlot()" style="background:#c44; margin-top:8px;">❌ 移除英雄</button>
+    <button onclick="closeSelector()" style="margin-top:8px;">取消</button>
+  </div>
+</div>
+
+<!-- 收藏弹窗 -->
+<div id="collectionPanel" class="modal">
+  <div class="modal-box">
+    <h3>📌 英雄收藏 (最多10个)</h3>
+    <div class="collection-grid" id="collectionGrid"></div>
+    <p style="font-size:12px; color:#8a6a4a;">* 英雄战死后可在此花费金币复活（装备一同恢复）<br>* 复活后收藏位保留</p>
+    <button onclick="closeCollection()" style="margin-top:10px;">关闭</button>
+  </div>
+</div>
+
+<!-- 选择收藏目标弹窗 -->
+<div id="collectionSelector" class="modal">
+  <div class="modal-box">
+    <h3>选择要收藏的英雄</h3>
+    <div id="collectionUnitList"></div>
+    <button onclick="closeCollectionSelector()" style="margin-top:10px;">取消</button>
+  </div>
+</div>
+
+<script>
+  // ==================== 核心数据 ====================
+  const MAX_HERO_SLOTS = 5;
+  const MAX_PRODUCTION_SLOTS = 16;
+  const MAX_COLLECTION_SLOTS = 10;
+  const MAX_EQUIP_LEVEL = 8;
+
+  const SLOT_MAP = {
+    'weapon': ['剑', '刀', '弓'],
+    'shield': ['盾'],
+    'helm': ['头盔'],
+    'armor': ['盔甲'],
+    'boots': ['靴子'],
+    'accessory': ['戒指', '护符']
+  };
+
+  const SLOT_ORDER = ['weapon', 'shield', 'helm', 'armor', 'boots', 'accessory'];
+  const SLOT_NAMES = {
+    weapon: '武器',
+    shield: '盾',
+    helm: '头盔',
+    armor: '盔甲',
+    boots: '靴子',
+    accessory: '饰品'
+  };
+
+  const EQUIP_TYPES = {
+    '剑': { atk: 12, hp: 0, def: 0, spd: 0, crit: 5, pen: 0 },
+    '刀': { atk: 15, hp: 0, def: 0, spd: 0, crit: 0, pen: 5 },
+    '弓': { atk: 10, hp: 0, def: 0, spd: 5, crit: 0, pen: 0 },
+    '盾': { atk: 0, hp: 20, def: 5, spd: 0, crit: 0, pen: 0 },
+    '头盔': { atk: 0, hp: 15, def: 4, spd: 0, crit: 0, pen: 0 },
+    '盔甲': { atk: 0, hp: 25, def: 6, spd: 0, crit: 0, pen: 0 },
+    '靴子': { atk: 0, hp: 10, def: 3, spd: 3, crit: 0, pen: 0 },
+    '戒指': { atk: 5, hp: 0, def: 0, spd: 3, crit: 3, pen: 3 },
+    '护符': { atk: 4, hp: 10, def: 3, spd: 0, crit: 0, pen: 0 }
+  };
+  const POTION_HEAL = 20;
+  const MONSTER_NAMES = ['哥布林', '骷髅', '兽人', '幽灵', '石像鬼'];
+  const HERO_NAMES = ['亚瑟', '莉莉丝', '雷恩', '艾琳', '巴尔', '索拉', '凯', '菲奥娜'];
+  const ADVENTURER_NAMES = ['旅人', '流浪者', '学徒', '佣兵', '探索者', '游侠', '民兵'];
+  const MAX_TOWN_LEVEL = 10;
+  const FURNACE_COST = 10;
+  const UPGRADE_COST = 30;
+  const REVIVE_HERO_COST = 50;
+  const REVIVE_ADVENTURER_COST = 30;
+
+  function getSlotName(equipType) {
+    for (let [slot, types] of Object.entries(SLOT_MAP)) {
+      if (types.includes(equipType)) return slot;
+    }
+    return null;
+  }
+
+  function createEmptySlots() {
+    let slots = {};
+    SLOT_ORDER.forEach(s => slots[s] = null);
+    return slots;
+  }
+
+  function deepCopyEquipSlots(slots) {
+    const copy = {};
+    for (let s of SLOT_ORDER) {
+      copy[s] = slots[s] ? { ...slots[s] } : null;
+    }
+    return copy;
+  }
+
+  function randomStats(type) {
+    if (type === 'hero') {
+      return {
+        atk: Math.floor(Math.random() * 10) + 1,
+        hp: Math.floor(Math.random() * 20) + 11,
+        def: Math.floor(Math.random() * 5) + 1,
+        spd: Math.floor(Math.random() * 5) + 1,
+        crit: Math.floor(Math.random() * 5) + 1,
+        pen: Math.floor(Math.random() * 5) + 1
+      };
+    } else {
+      return {
+        atk: Math.floor(Math.random() * 5) + 1,
+        hp: Math.floor(Math.random() * 16) + 5,
+        def: Math.floor(Math.random() * 3) + 1,
+        spd: Math.floor(Math.random() * 3) + 1,
+        crit: Math.floor(Math.random() * 3) + 1,
+        pen: Math.floor(Math.random() * 3) + 1
+      };
+    }
+  }
+
+  function getHeroTotalStats(hero) {
+    if (!hero) return null;
+    const total = { ...hero.base };
+    if (hero.equipSlots) {
+      for (let slot of SLOT_ORDER) {
+        const equip = hero.equipSlots[slot];
+        if (equip) {
+          for (let k in total) {
+            if (equip[k] !== undefined) total[k] += equip[k];
+          }
+        }
+      }
+    }
+    total.maxHp = total.hp;
+    return total;
+  }
+
+  function getEquipStats(type, level) {
+    const base = EQUIP_TYPES[type];
+    const mult = Math.pow(1.5, level - 1);
+    let stats = {};
+    for (let k in base) stats[k] = Math.floor(base[k] * mult);
+    return stats;
+  }
+
+  function createEquip(id, type, level) {
+    return { id, type, level, ...getEquipStats(type, level) };
+  }
+
+  function createPotion(id) {
+    return { id, type: '血瓶', heal: POTION_HEAL };
+  }
+
+  // 新增：根据战斗次数生成怪物，拥有逐渐增长的暴击和穿透
+  function randomMonster(battleCount) {
+    const name = MONSTER_NAMES[Math.floor(Math.random() * MONSTER_NAMES.length)];
+    const diff = Math.max(1, battleCount);
+    const atk = Math.floor(Math.random() * 8) + 2 + diff;
+    const hp = Math.floor(Math.random() * 15) + 5 + diff * 3;
+    const def = Math.floor(Math.random() * 4) + Math.floor(diff / 3);
+    const spd = Math.floor(Math.random() * 5) + 1 + Math.floor(diff / 2);
+    const pen = Math.floor(Math.random() * (diff + 1)) + Math.floor(diff / 5);
+    const crit = Math.min(50, Math.floor(Math.random() * (diff * 2 + 5)));
+    return { name, atk, hp, def, spd, pen, crit };
+  }
+
+  // ==================== 游戏状态 ====================
+  let state = {
+    gold: 100,
+    production: [],
+    slots: new Array(MAX_HERO_SLOTS).fill(null),
+    monsters: [],
+    recruitedHeroes: [],
+    tavernHeroes: [],
+    tavernAdventurers: [],
+    townLevel: 1,
+    furnaceActive: false,
+    nextId: 1,
+    heroIdCounter: 1,
+    battle: null,
+    battleCount: 0,
+    collection: new Array(MAX_COLLECTION_SLOTS).fill(null)
+  };
+
+  let selectedSlotIndex = -1;
+  let selectedCollectionIndex = -1;
+  const slotPositions = [[2, 1], [4, 1], [1, 2], [3, 2], [5, 2]];
+  const ALL_TYPES = [...Object.keys(EQUIP_TYPES), '血瓶'];
+
+  function randomType() {
+    return ALL_TYPES[Math.floor(Math.random() * ALL_TYPES.length)];
+  }
+
+  function log(msg) {
+    document.getElementById('log').textContent = msg;
+  }
+
+  let taxTimer = null;
+  function startTaxTimer() {
+    if (taxTimer) clearInterval(taxTimer);
+    taxTimer = setInterval(() => {
+      const taxPerSecond = state.townLevel * 3 / 60;
+      state.gold += taxPerSecond;
+      render();
+    }, 1000);
+  }
+
+  function refreshTavern() {
+    state.tavernHeroes = [];
+    const heroCount = Math.floor(Math.random() * 3);
+    for (let i = 0; i < heroCount; i++) {
+      const base = randomStats('hero');
+      const sum = base.atk + base.hp + base.def + base.spd + base.crit + base.pen;
+      const cost = 10 + sum * 2;
+      const name = HERO_NAMES[Math.floor(Math.random() * HERO_NAMES.length)];
+      state.tavernHeroes.push({ name, base, cost });
+    }
+    state.tavernAdventurers = [];
+    const advCount = Math.floor(Math.random() * 5) + 1;
+    for (let i = 0; i < advCount; i++) {
+      const base = randomStats('adventurer');
+      const name = '冒险者·' + ADVENTURER_NAMES[Math.floor(Math.random() * ADVENTURER_NAMES.length)];
+      state.tavernAdventurers.push({ name, base, cost: 10 });
+    }
+  }
+
+  function getTownUpgradeCost() {
+    if (state.townLevel >= MAX_TOWN_LEVEL) return null;
+    return Math.floor(50 * Math.pow(2, state.townLevel - 1));
+  }
+
+  function isAdventurer(unit) {
+    return unit && unit.name.startsWith('冒险者·');
+  }
+
+  function getAllLivingUnits() {
+    const units = [...state.recruitedHeroes];
+    state.slots.forEach(slot => {
+      if (slot) units.push(slot);
+    });
+    return units;
+  }
+
+  function findUnitByHeroId(heroId) {
+    const all = getAllLivingUnits();
+    return all.find(u => u.heroId === heroId);
+  }
+
+  // ==================== 渲染 ====================
+  function render() {
+    document.getElementById('goldDisplay').textContent = Math.floor(state.gold);
+    renderProduction();
+    renderHeroes();
+    renderMonsters();
+    if (state.battle) {
+      document.getElementById('battleLog').style.display = 'block';
+      document.getElementById('battleLog').innerHTML = state.battle.log.slice(-10).join('<br>');
+      renderQueue();
+    } else {
+      document.getElementById('battleLog').style.display = 'none';
+      document.getElementById('actionQueue').innerHTML = '';
+    }
+  }
+
+  function renderMonsters() {
+    const list = document.getElementById('monsterList');
+    const total = document.getElementById('monsterTotal');
+    if (state.monsters.length === 0) {
+      list.innerHTML = '<p style="color:#8a7a6a; text-align:center;">点击按钮直接搜寻怪物并战斗</p>';
+      total.textContent = '';
+      return;
+    }
+    list.innerHTML = state.monsters.map(m => `
+            <div class="monster-card">
+                <span class="monster-name">${m.name}</span>
+                <span class="monster-stats">⚔️${m.atk} ❤️${m.hp} 🛡️${m.def} 💨${m.spd}</span>
+            </div>
+        `).join('');
+    const totalHp = state.monsters.reduce((s, m) => s + m.hp, 0);
+    total.textContent = `怪物总计：❤️${totalHp}`;
+  }
+
+  function renderHeroes() {
+    const grid = document.getElementById('heroGrid');
+    grid.innerHTML = '';
+    state.slots.forEach((hero, idx) => {
+      const hex = document.createElement('div');
+      hex.className = 'hex-slot' + (hero ? ' filled' : '');
+      hex.dataset.slotIndex = idx;
+      const [r, c] = slotPositions[idx];
+      hex.style.gridRow = `${r} / ${r + 2}`;
+      hex.style.gridColumn = c;
+
+      hex.addEventListener('click', e => {
+        if (hero) openHeroDetail(idx);
+        else {
+          if (state.recruitedHeroes.length === 0) {
+            log('⚠️ 请先去酒馆招募！');
+            return;
+          }
+          openSelector(idx);
+        }
+      });
+
+      hex.addEventListener('dragover', e => {
+        e.preventDefault();
+        hex.classList.add('dragover');
+      });
+      hex.addEventListener('dragleave', () => hex.classList.remove('dragover'));
+      hex.addEventListener('drop', e => {
+        e.preventDefault();
+        hex.classList.remove('dragover');
+        if (!hero) return;
+        const id = parseInt(e.dataTransfer.getData('text/plain'));
+        const item = state.production.find(p => p.id === id);
+        if (!item) return;
+
+        if (item.type === '血瓶') {
+          const stats = getHeroTotalStats(hero);
+          if (hero.currentHp >= stats.maxHp) {
+            log('❤️ 血量已满');
+            return;
+          }
+          const heal = Math.min(item.heal, stats.maxHp - hero.currentHp);
+          hero.currentHp += heal;
+          if (state.battle?.heroes) {
+            const b = state.battle.heroes.find(h => h.slotIndex === idx);
+            if (b) b.currentHp = hero.currentHp;
+          }
+          state.production = state.production.filter(p => p.id !== id);
+          log(`🧪 ${hero.name} 恢复 ${heal} 点生命`);
+          render();
+          return;
+        }
+
+        const slot = getSlotName(item.type);
+        if (!slot) return;
+        const oldEquip = hero.equipSlots[slot];
+        if (oldEquip) {
+          if (state.production.length >= MAX_PRODUCTION_SLOTS) {
+            log('❌ 生产区已满，无法替换装备');
+            return;
+          }
+          state.production.push(oldEquip);
+        }
+        hero.equipSlots[slot] = { ...item };
+        state.production = state.production.filter(p => p.id !== id);
+        const newStats = getHeroTotalStats(hero);
+        if (hero.currentHp > newStats.maxHp) hero.currentHp = newStats.maxHp;
+        if (state.battle?.heroes) {
+          const b = state.battle.heroes.find(h => h.slotIndex === idx);
+          if (b) {
+            b.currentHp = hero.currentHp;
+            b.equipSlots = JSON.parse(JSON.stringify(hero.equipSlots));
+          }
+        }
+        log(`✅ ${hero.name} 装备了 ${item.type} Lv${item.level || ''} 到 ${SLOT_NAMES[slot]}槽`);
+        render();
+      });
+
+      const content = document.createElement('div');
+      content.className = 'slot-content';
+      if (hero) {
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'hero-name';
+        nameSpan.textContent = hero.name;
+        content.appendChild(nameSpan);
+      } else {
+        const hint = document.createElement('span');
+        hint.style.fontSize = '12px';
+        hint.style.color = '#5a4d3a';
+        hint.textContent = '点击放置';
+        content.appendChild(hint);
+      }
+      hex.appendChild(content);
+      grid.appendChild(hex);
+    });
+  }
+
+  function getSlotEmoji(type) {
+    const map = {
+      '剑': '🗡️', '刀': '🔪', '弓': '🏹',
+      '盾': '🛡️', '头盔': '⛑️', '盔甲': '👕',
+      '靴子': '👢', '戒指': '💍', '护符': '📿'
+    };
+    return map[type] || '⚙️';
+  }
+
+  function renderProduction() {
+    const grid = document.getElementById('productionGrid');
+    grid.innerHTML = '';
+    for (let i = 0; i < MAX_PRODUCTION_SLOTS; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      if (i < state.production.length) {
+        const item = state.production[i];
+        const isPotion = item.type === '血瓶';
+        slot.classList.add('has-item');
+        slot.draggable = true;
+        slot.dataset.id = item.id;
+        slot.innerHTML = isPotion
+          ? `<div class="item potion"><span class="type">🧪血瓶</span><span class="lv">恢复${item.heal}</span></div>`
+          : `<div class="item lv${item.level}"><span class="type">${item.type}</span> Lv${item.level}<span class="lv">⚔️${item.atk}</span></div>`;
+        slot.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', item.id);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        if (!isPotion) {
+          slot.addEventListener('dragover', e => {
+            e.preventDefault();
+            slot.classList.add('dragover');
+          });
+          slot.addEventListener('dragleave', () => slot.classList.remove('dragover'));
+          slot.addEventListener('drop', e => {
+            e.preventDefault();
+            slot.classList.remove('dragover');
+            const sourceId = parseInt(e.dataTransfer.getData('text/plain'));
+            const targetId = parseInt(slot.dataset.id);
+            if (sourceId === targetId) {
+              log('👀 不能和自己合成');
+              return;
+            }
+            const src = state.production.find(p => p.id === sourceId);
+            const tgt = state.production.find(p => p.id === targetId);
+            if (!src || !tgt) return;
+            if (src.type === '血瓶' || tgt.type === '血瓶') {
+              log('🧪 血瓶不能合成');
+              return;
+            }
+            if (src.type === tgt.type && src.level === tgt.level) {
+              if (src.level >= MAX_EQUIP_LEVEL) {
+                log('🌟 已达最高等级');
+                return;
+              }
+              const newItem = createEquip(state.nextId++, src.type, src.level + 1);
+              state.production = state.production.filter(p => p.id !== sourceId && p.id !== targetId);
+              state.production.push(newItem);
+              log(`✨ 合成成功！ Lv${src.level}+Lv${src.level} → Lv${newItem.level}`);
+              render();
+            } else log('❌ 合成失败：需要同类型同等级');
+          });
+        }
+      }
+      grid.appendChild(slot);
+    }
+  }
+
+  function renderQueue() {
+    const div = document.getElementById('actionQueue');
+    if (!state.battle || state.battle.queue.length === 0) {
+      div.innerHTML = '';
+      return;
+    }
+    const queue = state.battle.queue;
+    const current = queue[0];
+    div.innerHTML = '<div>行动队列：</div>' + queue.map(u => {
+      let cls = u.type === 'hero' ? 'hero' : 'monster';
+      let name = u.name + (u.currentHp > 0 ? `(${u.currentHp})` : '');
+      return `<span class="queue-item ${cls}" style="${u === current ? 'border:2px solid yellow' : ''}">${name}</span>`;
+    }).join(' ');
+  }
+
+  // ==================== 熔炉逻辑 ====================
+  function openFurnace() {
+    document.getElementById('furnacePanel').classList.add('active');
+    const prodZone = document.getElementById('productionZone');
+    if (prodZone) prodZone.classList.add('highlight');
+    updateFurnaceUI();
+  }
+  function closeFurnace() {
+    document.getElementById('furnacePanel').classList.remove('active');
+    const prodZone = document.getElementById('productionZone');
+    if (prodZone) prodZone.classList.remove('highlight');
+    if (state.furnaceActive) {
+      state.furnaceActive = false;
+      log('🔥 熔炉已关闭，激活状态结束。');
+    }
+  }
+  function updateFurnaceUI() {
+    const status = document.getElementById('furnaceStatus');
+    const btn = document.getElementById('furnaceActivateBtn');
+    if (state.furnaceActive) {
+      status.textContent = '状态：已激活，可无限拖入装备销毁';
+      btn.style.display = 'none';
+    } else {
+      status.textContent = '状态：未激活';
+      btn.style.display = 'inline-block';
+    }
+  }
+  function activateFurnace() {
+    if (state.gold < FURNACE_COST) {
+      log('💸 金币不足，无法激活熔炉');
+      return;
+    }
+    state.gold -= FURNACE_COST;
+    state.furnaceActive = true;
+    updateFurnaceUI();
+    log('🔥 熔炉已激活，现在可以无限销毁装备，直至关闭弹窗。');
+    render();
+  }
+
+  (function setupFurnaceDrop() {
+    const dropZone = document.getElementById('furnaceDropZone');
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (state.furnaceActive) dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (!state.furnaceActive) {
+        log('⚠️ 请先激活熔炉');
+        return;
+      }
+      const id = parseInt(e.dataTransfer.getData('text/plain'));
+      const item = state.production.find(p => p.id === id);
+      if (!item) {
+        log('⚠️ 无效的装备');
+        return;
+      }
+      if (item.type === '血瓶') {
+        log('🧪 血瓶不能放入熔炉');
+        return;
+      }
+      state.production = state.production.filter(p => p.id !== id);
+      log(`🔥 销毁了 ${item.type} Lv${item.level}`);
+      render();
+    });
+  })();
+
+  // ==================== 城镇逻辑 ====================
+  function openTown() {
+    document.getElementById('townPanel').classList.add('active');
+    updateTownUI();
+  }
+  function closeTown() {
+    document.getElementById('townPanel').classList.remove('active');
+  }
+  function updateTownUI() {
+    document.getElementById('townLevel').textContent = state.townLevel;
+    document.getElementById('townTax').textContent = state.townLevel * 3;
+    const cost = getTownUpgradeCost();
+    if (cost !== null) {
+      document.getElementById('townUpgradeCost').textContent = `升级费用：${cost} 金币`;
+      document.getElementById('townUpgradeBtn').style.display = 'inline-block';
+    } else {
+      document.getElementById('townUpgradeCost').textContent = '已达到最高等级';
+      document.getElementById('townUpgradeBtn').style.display = 'none';
+    }
+  }
+  function upgradeTown() {
+    const cost = getTownUpgradeCost();
+    if (cost === null) return;
+    if (state.gold < cost) {
+      log('💸 金币不足，无法升级城镇');
+      return;
+    }
+    state.gold -= cost;
+    state.townLevel++;
+    updateTownUI();
+    log(`🏛️ 城镇升级至 ${state.townLevel} 级！税收提升。`);
+    render();
+  }
+
+  // ==================== 酒馆逻辑 ====================
+  function openTavern() {
+    document.getElementById('tavernPanel').classList.add('active');
+    renderTavern();
+  }
+  function closeTavern() {
+    document.getElementById('tavernPanel').classList.remove('active');
+  }
+  function renderTavern() {
+    document.getElementById('tavernHeroList').innerHTML = state.tavernHeroes.map((h, i) => `
+            <div class="tavern-unit"><span>${h.name} (⚔️${h.base.atk} ❤️${h.base.hp} 🛡️${h.base.def})</span><button onclick="buyUnit('hero',${i})">${h.cost}金</button></div>
+        `).join('') || '<p>暂无英雄</p>';
+    document.getElementById('tavernAdventurerList').innerHTML = state.tavernAdventurers.map((a, i) => `
+            <div class="tavern-unit"><span>${a.name} (⚔️${a.base.atk} ❤️${a.base.hp} 🛡️${a.base.def})</span><button onclick="buyUnit('adventurer',${i})">10金</button></div>
+        `).join('') || '<p>暂无冒险者</p>';
+  }
+  window.buyUnit = function (type, index) {
+    let unit;
+    if (type === 'hero') {
+      if (index >= state.tavernHeroes.length) return;
+      unit = state.tavernHeroes[index];
+      if (state.gold < unit.cost) {
+        log('💸 金币不足！');
+        return;
+      }
+      state.gold -= unit.cost;
+      state.tavernHeroes.splice(index, 1);
+    } else {
+      if (index >= state.tavernAdventurers.length) return;
+      unit = state.tavernAdventurers[index];
+      if (state.gold < unit.cost) {
+        log('💸 金币不足！');
+        return;
+      }
+      state.gold -= unit.cost;
+      state.tavernAdventurers.splice(index, 1);
+    }
+    const hero = {
+      heroId: state.heroIdCounter++,
+      name: unit.name,
+      base: unit.base,
+      equipSlots: createEmptySlots(),
+      currentHp: unit.base.hp,
+      battleCount: 0
+    };
+    state.recruitedHeroes.push(hero);
+    log(`✅ 招募了 ${unit.name}，花费 ${unit.cost} 金`);
+    render();
+    renderTavern();
+  };
+
+  // ==================== 部署与详情 ====================
+  function openSelector(idx) {
+    selectedSlotIndex = idx;
+    document.getElementById('recruitList').innerHTML = state.recruitedHeroes.map((h, i) =>
+      `<button onclick="deployHero(${i})" style="margin:4px; width:80%;">${h.name} (❤️${h.currentHp}/${getHeroTotalStats(h).maxHp})</button>`
+    ).join('') || '<p>没有可部署的英雄</p>';
+    document.getElementById('heroSelector').classList.add('active');
+  }
+  function closeSelector() {
+    document.getElementById('heroSelector').classList.remove('active');
+    selectedSlotIndex = -1;
+  }
+  function deployHero(poolIndex) {
+    if (selectedSlotIndex < 0) return;
+    const hero = state.recruitedHeroes.splice(poolIndex, 1)[0];
+    if (hero.battleCount === undefined) hero.battleCount = 0;
+    const old = state.slots[selectedSlotIndex];
+    if (old) {
+      for (let slot of SLOT_ORDER) {
+        if (old.equipSlots[slot] && state.production.length < MAX_PRODUCTION_SLOTS) {
+          state.production.push(old.equipSlots[slot]);
+        }
+      }
+      old.battleCount = old.battleCount || 0;
+      state.recruitedHeroes.push(old);
+    }
+    state.slots[selectedSlotIndex] = hero;
+    closeSelector();
+    log(`✅ ${hero.name} 已部署`);
+    render();
+  }
+  function removeHeroFromSlot() {
+    if (selectedSlotIndex < 0) return;
+    const hero = state.slots[selectedSlotIndex];
+    if (!hero) {
+      log('槽位已空');
+      closeSelector();
+      return;
+    }
+    for (let slot of SLOT_ORDER) {
+      if (hero.equipSlots[slot] && state.production.length < MAX_PRODUCTION_SLOTS) {
+        state.production.push(hero.equipSlots[slot]);
+      }
+    }
+    hero.equipSlots = createEmptySlots();
+    hero.battleCount = hero.battleCount || 0;
+    state.slots[selectedSlotIndex] = null;
+    state.recruitedHeroes.push(hero);
+    closeSelector();
+    log(`🗑️ ${hero.name} 已返回英雄池`);
+    render();
+  }
+
+  function openHeroDetail(idx) {
+    const hero = state.slots[idx];
+    if (!hero) return;
+    selectedSlotIndex = idx;
+    const stats = getHeroTotalStats(hero);
+    document.getElementById('detailHeroName').textContent = `⚔️ ${hero.name}`;
+    document.getElementById('detailStats').innerHTML = `
+            <div><b>攻击</b> ${stats.atk}</div><div><b>血量</b> ${hero.currentHp}/${stats.maxHp}</div>
+            <div><b>防御</b> ${stats.def}</div><div><b>速度</b> ${stats.spd}</div>
+            <div><b>暴击</b> ${stats.crit}%</div><div><b>穿透</b> ${stats.pen}</div>
+            <div><b>战斗次数</b> ${hero.battleCount || 0}</div>
+        `;
+    let equipHtml = '';
+    SLOT_ORDER.forEach(slot => {
+      const equip = hero.equipSlots[slot];
+      equipHtml += `<div class="detail-slot-row">
+                <div class="detail-slot-icon${equip ? ' filled' : ''}">${equip ? getSlotEmoji(equip.type) : '⬤'}</div>
+                <span>${SLOT_NAMES[slot]}：${equip ? equip.type + ' Lv.' + equip.level : '空'}</span>
+            </div>`;
+    });
+    document.getElementById('detailEquipSlots').innerHTML = equipHtml;
+
+    const upgradeBtn = document.getElementById('upgradeAdventurerBtn');
+    if (isAdventurer(hero) && (hero.battleCount || 0) >= 6) {
+      upgradeBtn.style.display = 'inline-block';
+    } else {
+      upgradeBtn.style.display = 'none';
+    }
+    document.getElementById('heroDetailPanel').classList.add('active');
+  }
+  function closeHeroDetail() {
+    document.getElementById('heroDetailPanel').classList.remove('active');
+    selectedSlotIndex = -1;
+  }
+  function changeHero() {
+    document.getElementById('heroDetailPanel').classList.remove('active');
+    if (state.recruitedHeroes.length === 0) {
+      log('英雄池为空');
+      return;
+    }
+    openSelector(selectedSlotIndex);
+  }
+  function upgradeAdventurer() {
+    const hero = state.slots[selectedSlotIndex];
+    if (!hero || !isAdventurer(hero) || (hero.battleCount || 0) < 6) {
+      log('⚠️ 不符合升级条件');
+      return;
+    }
+    if (state.gold < UPGRADE_COST) {
+      log('💸 金币不足，升级需要30金');
+      return;
+    }
+    state.gold -= UPGRADE_COST;
+    const newBase = randomStats('hero');
+    hero.base = newBase;
+    hero.currentHp = newBase.hp;
+    hero.name = HERO_NAMES[Math.floor(Math.random() * HERO_NAMES.length)];
+    log(`⬆️ ${hero.name} 已升级为英雄！属性大幅提升。`);
+    closeHeroDetail();
+    render();
+  }
+
+  // ==================== 收藏系统（复活后保留收藏位） ====================
+  function openCollection() {
+    document.getElementById('collectionPanel').classList.add('active');
+    renderCollection();
+  }
+  function closeCollection() {
+    document.getElementById('collectionPanel').classList.remove('active');
+    selectedCollectionIndex = -1;
+  }
+  function renderCollection() {
+    const grid = document.getElementById('collectionGrid');
+    grid.innerHTML = '';
+    for (let i = 0; i < MAX_COLLECTION_SLOTS; i++) {
+      const slotData = state.collection[i];
+      const slotDiv = document.createElement('div');
+      slotDiv.className = 'collection-slot' + (slotData ? ' filled' : '');
+      slotDiv.addEventListener('click', () => onCollectionSlotClick(i));
+
+      if (slotData) {
+        const isDead = !findUnitByHeroId(slotData.heroId);
+        const icon = slotData.name.startsWith('冒险者·') ? '🧑' : '⚔️';
+        slotDiv.innerHTML = `
+          <div class="col-icon">${icon}</div>
+          <div class="col-name">${slotData.name}</div>
+          <div class="col-status">${isDead ? '已阵亡' : '存活'}</div>
+        `;
+        if (isDead) {
+          slotDiv.style.borderColor = '#a54c4c';
+          slotDiv.style.background = '#c4a0a0';
+        }
+      } else {
+        slotDiv.innerHTML = `<span style="font-size:20px;">+</span>`;
+      }
+      grid.appendChild(slotDiv);
+    }
+  }
+  function onCollectionSlotClick(index) {
+    selectedCollectionIndex = index;
+    const slotData = state.collection[index];
+    if (!slotData) {
+      openCollectionSelector();
+    } else {
+      const isDead = !findUnitByHeroId(slotData.heroId);
+      if (isDead) {
+        const cost = slotData.name.startsWith('冒险者·') ? REVIVE_ADVENTURER_COST : REVIVE_HERO_COST;
+        if (confirm(`花费 ${cost} 金币复活 ${slotData.name} 吗？装备将一同恢复。`)) {
+          reviveFromCollection(index);
+        }
+      } else {
+        if (confirm(`取消收藏 ${slotData.name} 吗？`)) {
+          state.collection[index] = null;
+          renderCollection();
+          log(`已取消收藏`);
+        }
+      }
+    }
+  }
+  function openCollectionSelector() {
+    const allUnits = getAllLivingUnits();
+    const collectedIds = state.collection.filter(s => s).map(s => s.heroId);
+    const availableUnits = allUnits.filter(u => !collectedIds.includes(u.heroId));
+    const listDiv = document.getElementById('collectionUnitList');
+    if (availableUnits.length === 0) {
+      listDiv.innerHTML = '<p>没有可收藏的英雄/冒险者</p>';
+    } else {
+      listDiv.innerHTML = availableUnits.map((u, idx) => `
+        <button onclick="collectUnit(${u.heroId})" style="margin:4px; width:90%;">
+          ${u.name} (❤️${u.currentHp}/${getHeroTotalStats(u).maxHp})
+        </button>
+      `).join('');
+    }
+    document.getElementById('collectionSelector').classList.add('active');
+  }
+  function closeCollectionSelector() {
+    document.getElementById('collectionSelector').classList.remove('active');
+    selectedCollectionIndex = -1;
+  }
+  window.collectUnit = function(heroId) {
+    if (selectedCollectionIndex < 0) return;
+    const unit = findUnitByHeroId(heroId);
+    if (!unit) return;
+    state.collection[selectedCollectionIndex] = {
+      heroId: unit.heroId,
+      name: unit.name,
+      base: { ...unit.base },
+      equipSlots: deepCopyEquipSlots(unit.equipSlots),
+      isHero: !isAdventurer(unit),
+      battleCount: unit.battleCount || 0
+    };
+    closeCollectionSelector();
+    renderCollection();
+    log(`📌 已收藏 ${unit.name}`);
+  };
+
+  function reviveFromCollection(index) {
+    const slotData = state.collection[index];
+    if (!slotData) return;
+    const cost = slotData.name.startsWith('冒险者·') ? REVIVE_ADVENTURER_COST : REVIVE_HERO_COST;
+    if (state.gold < cost) {
+      log('💸 金币不足，无法复活');
+      return;
+    }
+    state.gold -= cost;
+    const newHeroId = state.heroIdCounter++;
+    const revived = {
+      heroId: newHeroId,
+      name: slotData.name,
+      base: { ...slotData.base },
+      equipSlots: deepCopyEquipSlots(slotData.equipSlots),
+      currentHp: slotData.base.hp,
+      battleCount: slotData.battleCount
+    };
+    state.recruitedHeroes.push(revived);
+    state.collection[index] = {
+      heroId: newHeroId,
+      name: revived.name,
+      base: { ...revived.base },
+      equipSlots: deepCopyEquipSlots(revived.equipSlots),
+      isHero: !isAdventurer(revived),
+      battleCount: revived.battleCount
+    };
+    renderCollection();
+    render();
+    log(`✨ ${revived.name} 已复活并返回英雄池！`);
+  }
+
+  // ==================== 战斗系统（怪物拥有逐渐增长的暴击和穿透） ====================
+  async function startBattle() {
+    const alive = state.slots.filter(h => h && h.currentHp > 0);
+    if (alive.length === 0) {
+      log('没有存活的英雄！');
+      return;
+    }
+
+    alive.forEach(h => {
+      h.battleCount = (h.battleCount || 0) + 1;
+    });
+
+    state.battleCount++;
+    const diff = state.battleCount;
+    const count = Math.floor(Math.random() * 5) + 1;
+    state.monsters = Array.from({ length: count }, () => randomMonster(diff));
+    log(`🔍 遭遇了 ${count} 只怪物！(第${diff}场)`);
+
+    const battleHeroes = alive.map(hero => {
+      const bh = {
+        type: 'hero',
+        name: hero.name,
+        heroId: hero.heroId,
+        slotIndex: state.slots.indexOf(hero),
+        base: hero.base,
+        equipSlots: JSON.parse(JSON.stringify(hero.equipSlots)),
+        currentHp: hero.currentHp,
+        get stats() {
+          const total = { ...this.base };
+          for (let slot of SLOT_ORDER) {
+            const equip = this.equipSlots[slot];
+            if (equip) {
+              for (let k in total) {
+                if (equip[k] !== undefined) total[k] += equip[k];
+              }
+            }
+          }
+          total.maxHp = total.hp;
+          return total;
+        },
+        get atk() { return this.stats.atk; },
+        get def() { return this.stats.def; },
+        get spd() { return this.stats.spd; },
+        get crit() { return this.stats.crit; },
+        get pen() { return this.stats.pen; }
+      };
+      return bh;
+    });
+
+    const battleMonsters = state.monsters.map(m => ({
+      type: 'monster',
+      name: m.name,
+      atk: m.atk,
+      def: m.def,
+      spd: m.spd,
+      crit: m.crit || 0,
+      pen: m.pen || 0,
+      currentHp: m.hp,
+      maxHp: m.hp
+    }));
+
+    const all = [...battleHeroes, ...battleMonsters].sort((a, b) => b.spd - a.spd || Math.random() - 0.5);
+    const queue = [...all];
+    state.battle = { heroes: battleHeroes, monsters: battleMonsters, queue, log: [] };
+    document.getElementById('battleBtn').disabled = true;
+    state.battle.log.push(`⚔️ 第${diff}场战斗开始！`);
+    render();
+
+    while (queue.some(u => u.type === 'hero' && u.currentHp > 0) && queue.some(u => u.type === 'monster' && u.currentHp > 0)) {
+      for (let i = queue.length - 1; i >= 0; i--) if (queue[i].currentHp <= 0 && i !== 0) queue.splice(i, 1);
+      while (queue.length && queue[0].currentHp <= 0) queue.shift();
+      if (!queue.length) break;
+
+      const actor = queue.shift();
+      let target;
+      if (actor.type === 'monster') {
+        const heroes = queue.filter(u => u.type === 'hero' && u.currentHp > 0);
+        if (!heroes.length) break;
+        const sorted = [...heroes].sort((a, b) => b.currentHp - a.currentHp);
+        const ranks = [];
+        let cur = [], prev = null;
+        for (const h of sorted) {
+          if (prev === null || h.currentHp === prev) cur.push(h);
+          else {
+            ranks.push(cur);
+            cur = [h];
+          }
+          prev = h.currentHp;
+        }
+        if (cur.length) ranks.push(cur);
+        const candidates = ranks.slice(-3).flat();
+        target = candidates[Math.floor(Math.random() * candidates.length)];
+      } else {
+        const monsters = queue.filter(u => u.type === 'monster' && u.currentHp > 0);
+        if (!monsters.length) break;
+        target = monsters[Math.floor(Math.random() * monsters.length)];
+      }
+
+      // 伤害计算：穿透 + 暴击
+      let effectiveDef = Math.max(0, target.def - (actor.pen || 0));
+      let dmg = Math.max(1, actor.atk - effectiveDef);
+      let critHit = (actor.crit || 0) > 0 && Math.random() * 100 < actor.crit;
+      if (critHit) dmg = Math.floor(dmg * 2);
+
+      target.currentHp -= dmg;
+      state.battle.log.push(`${actor.name} → ${target.name} -${dmg}${critHit ? ' 💥暴击！' : ''}`);
+      if (actor.currentHp > 0) queue.push(actor);
+      render();
+      await new Promise(r => setTimeout(r, 800));
+    }
+
+    const win = battleMonsters.every(m => m.currentHp <= 0);
+    if (win) {
+      battleHeroes.forEach(bh => {
+        const slot = state.slots[bh.slotIndex];
+        if (bh.currentHp > 0) {
+          slot.currentHp = getHeroTotalStats(slot).maxHp;
+        } else {
+          state.slots[bh.slotIndex] = null;
+        }
+      });
+      state.gold += 10 + Math.floor(Math.random() * 21) + diff * 2;
+      if (state.production.length < MAX_PRODUCTION_SLOTS) {
+        const type = randomType();
+        state.production.push(type === '血瓶' ? createPotion(state.nextId++) : createEquip(state.nextId++, type, 1));
+      }
+      log(`🎉 胜利！获得少量金币。`);
+    } else {
+      state.slots.fill(null);
+      log('💀 战斗失败！英雄全部阵亡，装备丢失，但生产区装备得以保留。');
+    }
+    state.monsters = [];
+    state.battle = null;
+    document.getElementById('battleBtn').disabled = false;
+    refreshTavern();
+    render();
+  }
+
+  function produceItem() {
+    if (state.gold < 20) {
+      log('金币不足');
+      return;
+    }
+    if (state.production.length >= MAX_PRODUCTION_SLOTS) {
+      log('生产区已满');
+      return;
+    }
+    state.gold -= 20;
+    const type = randomType();
+    state.production.push(type === '血瓶' ? createPotion(state.nextId++) : createEquip(state.nextId++, type, 1));
+    log(`🔨 生产了 ${type}`);
+    render();
+  }
+
+  function resetGame() {
+    state.gold = 100;
+    state.production = [];
+    state.slots.fill(null);
+    state.monsters = [];
+    state.recruitedHeroes = [];
+    state.battle = null;
+    state.nextId = 1;
+    state.heroIdCounter = 1;
+    state.battleCount = 0;
+    state.townLevel = 1;
+    state.furnaceActive = false;
+    state.collection = new Array(MAX_COLLECTION_SLOTS).fill(null);
+    state.production.push(createEquip(state.nextId++, '剑', 1), createEquip(state.nextId++, '剑', 1));
+    document.getElementById('battleBtn').disabled = false;
+    const prodZone = document.getElementById('productionZone');
+    if (prodZone) prodZone.classList.remove('highlight');
+    refreshTavern();
+    startTaxTimer();
+    log('已重置');
+    render();
+  }
+
+  // 初始化
+  refreshTavern();
+  state.production.push(createEquip(state.nextId++, '剑', 1), createEquip(state.nextId++, '剑', 1));
+  startTaxTimer();
+  render();
+  log('💡 失败只损失英雄装备，生产区装备保留。');
+</script>
+</body>
+</html>
