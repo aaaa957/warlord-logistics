@@ -22,13 +22,16 @@
       max-width: 500px;
       width: 100%;
       background: #f5efe6;
-      border-radius: 36px;
-      padding: 80px 20px;
+      border-radius: 28px;
+      /* 原为 80px 20px：竖向内边距吃掉 160px，是后面所有溢出的根源 */
+      padding: 16px 16px 20px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       display: flex;
       flex-direction: column;
       height: 100vh;
-      overflow: hidden;
+      /* 内容装不下时必须能滚，而不是把子元素挤出来盖到别的区块上 */
+      overflow-y: auto;
+      overflow-x: hidden;
     }
     #header {
       display: flex;
@@ -61,13 +64,14 @@
 
     .zone {
       background: #e8ddd0;
-      border-radius: 24px;
-      padding: 20px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+      border-radius: 20px;
+      padding: 14px;
+      /* 让区块按内容高度排布。原来用 flex:1 强行平分高度，
+         内容比分配到的空间高时就被压扁/裁掉，是"六边形被切掉"的原因。
+         现在由 #app 滚动兜底，区块不再被压缩。 */
+      flex: 0 0 auto;
       min-height: 0;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
       transition: box-shadow 0.2s, border 0.2s;
     }
     .zone:last-of-type { margin-bottom: 0; }
@@ -76,14 +80,16 @@
       box-shadow: 0 0 15px #f5b342;
     }
     .zone-title {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: bold;
       color: #5a4d3a;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       flex-shrink: 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .grid {
       flex: 1;
@@ -95,22 +101,33 @@
     }
 
     #heroZone { width: 100%; }
-    .hero-content { display: flex; flex: 1; min-height: 0; gap: 12px; }
+    .hero-content { display: flex; gap: 12px; align-items: stretch; }
     #heroGrid {
-      flex: 1;
+      flex: 1 1 auto;
+      /* flex 子项默认不肯收缩到内容宽度以下，窄屏时会把整页撑宽、右侧被裁掉 */
+      min-width: 0;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: repeat(6, 40px);
-      gap: 20px;
+      /* 5 个槽位按 2 列排就是 3 行。行高交给 auto，让格子恰好围住六边形，
+         不要再写死行数——写死行数与元素实际高度对不上，正是溢出到下一个区块的原因。 */
+      grid-auto-rows: auto;
+      gap: 10px;
       justify-items: center;
       align-items: center;
-      overflow: visible;
+      /* 兜底：万一还是装不下，在区块内部滚动，绝不允许盖住别的区块 */
+      overflow-y: auto;
+      overflow-x: hidden;
       background: #d6c8b8;
       border-radius: 16px;
-      padding: 14px;
+      padding: 12px;
     }
     #monsterPanel {
-      flex: 1;
+      /* 按内容收缩、不参与均分，把宽度让给六边形列（原来 flex:1 与左列各占一半，
+         六边形只剩 ~72px 一列，会被挤到下一行）。 */
+      flex: 0 1 auto;
+      max-width: 45%;
+      /* 同上：允许收缩，否则窄屏时"搜寻并战斗"按钮会把面板顶宽 */
+      min-width: 0;
       background: #d6c8b8;
       border-radius: 16px;
       padding: 12px;
@@ -133,8 +150,10 @@
     .monster-stats { color: #3a3020; }
 
     .hex-slot {
-      width: 80px;
-      height: 80px;
+      /* 外框 68px（66 + 2×1px 边框），正好是 3 行 × 53px。
+         原来 80px + 3px 虚线边框在 clip-path 下既不显示、又白白撑大尺寸。 */
+      width: 66px;
+      height: 66px;
       background: #c4b4a0;
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
       display: flex;
@@ -144,10 +163,19 @@
       cursor: pointer;
       transition: 0.1s;
       position: relative;
-      border: 3px dashed #a3927c;
       box-sizing: content-box;
     }
-    .hex-slot.filled { background: #b8a58a; border: 2px solid #8a7a62; }
+    /* clip-path 会把边框一起裁掉，所以"空位"的虚线感改由内描边表达 */
+    .hex-slot::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      border: 2px dashed #8f7d66;
+      pointer-events: none;
+    }
+    .hex-slot.filled { background: #b8a58a; }
+    .hex-slot.filled::before { display: none; }
     .slot-content {
       display: flex;
       flex-direction: column;
@@ -155,13 +183,13 @@
       justify-content: center;
       width: 100%;
       height: 100%;
-      padding: 5px;
+      padding: 4px;
     }
     .hero-name {
       font-weight: bold;
-      font-size: 12px;
+      font-size: 11px;
       background: rgba(255,255,255,0.8);
-      padding: 4px 8px;
+      padding: 2px 5px;
       border-radius: 8px;
       text-align: center;
       word-break: break-word;
@@ -171,14 +199,17 @@
     #productionGrid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr;
-      gap: 8px;
-      padding: 10px;
+      gap: 6px;
+      padding: 8px;
+      /* 4 列 × 16 格 = 4 行；行高固定，保证区块高度可预测 */
+      grid-auto-rows: 46px;
       overflow: hidden;
       align-content: start;
     }
     .slot {
-      width: 80px;
-      height: 80px;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
       background: #c4b4a0;
       border-radius: 16px;
       display: flex;
@@ -192,7 +223,6 @@
       cursor: default;
       flex-shrink: 0;
     }
-    #productionGrid .slot { width: 100%; height: 80px; }
     .slot.has-item { cursor: grab; }
     .slot.dragover { border-color: #f5b342; background: #dac29c; transform: scale(0.95); }
     .item {
@@ -223,8 +253,8 @@
 
     .flex-row { display: flex; gap: 12px; align-items: center; flex-shrink: 0; margin-top: 0; margin-bottom: 8px; }
     #log {
-      background:#2d2d1c; color:#b0b090; padding:12px 18px; border-radius:20px;
-      font-size:13px; min-height:56px; flex-shrink: 0;
+      background:#2d2d1c; color:#b0b090; padding:10px 16px; border-radius:18px;
+      font-size:12px; min-height:44px; flex-shrink: 0;
     }
 
     .battle-log {
@@ -333,7 +363,7 @@
       <div id="monsterPanel">
         <button id="battleBtn" onclick="startBattle()" style="width:100%; background:#b8860b;">⚔️ 搜寻并战斗</button>
         <div id="monsterList" style="flex:1; overflow-y:auto; min-height:0;">
-          <p style="color:#8a7a6a; text-align:center;">点击按钮直接搜寻怪物并战斗</p>
+          <p style="color:#8a7a6a; text-align:center;">点「搜寻并战斗」<br>开始讨伐</p>
         </div>
         <div style="font-weight:bold; text-align:center;" id="monsterTotal"></div>
         <div class="battle-log" id="battleLog" style="display:none;"></div>
@@ -699,7 +729,7 @@
       hex.className = 'hex-slot' + (hero ? ' filled' : '');
       hex.dataset.slotIndex = idx;
       const [r, c] = slotPositions[idx];
-      hex.style.gridRow = `${r} / ${r + 2}`;
+      hex.style.gridRow = r;
       hex.style.gridColumn = c;
 
       hex.addEventListener('click', e => {
@@ -1267,7 +1297,11 @@
   }
 
   // ==================== 战斗系统（怪物拥有逐渐增长的暴击和穿透） ====================
-  async function startBattle() {
+  // 注意：函数在 IIFE 内部，而按钮用的是内联 onclick="startBattle()"，
+  // 内联 handler 只在全局作用域查找，所以必须挂到 window 上，
+  // 否则点"搜寻并战斗"会直接报 ReferenceError（战斗永远打不起来）。
+  // 代码里 buyUnit / collectUnit 已是这个写法，这里保持一致。
+  window.startBattle = async function startBattle() {
     const alive = state.slots.filter(h => h && h.currentHp > 0);
     if (alive.length === 0) {
       log('没有存活的英雄！');
@@ -1402,7 +1436,7 @@
     document.getElementById('battleBtn').disabled = false;
     refreshTavern();
     render();
-  }
+  };
 
   function produceItem() {
     if (state.gold < 20) {
@@ -1449,6 +1483,11 @@
   startTaxTimer();
   render();
   log('💡 失败只损失英雄装备，生产区装备保留。');
+
+  // ?phone=380 强制手机框宽度（便于在不同宽度下检查布局）
+  const _phone = new URLSearchParams(location.search).get('phone');
+  if (_phone) document.getElementById('app').style.maxWidth = parseInt(_phone, 10) + 'px';
+
 </script>
 </body>
 </html>
